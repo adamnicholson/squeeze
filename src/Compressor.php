@@ -39,6 +39,7 @@ class Compressor
         preg_match('/^.+\n/', $compressed, $meta);
 
         $replacements = [];
+
         foreach (explode('&', $meta[0]) as $chunk) {
             $param = explode('=', $chunk);
             if (count($param) !== 2) {
@@ -111,16 +112,17 @@ class Compressor
      */
     private function findKey(string $data): string
     {
-        foreach (array_merge(range('a', 'z'), range('A', 'Z')) as $i) {
-            if (!strstr($data, $i) && !in_array($i, $this->usedKeys)) {
-                $this->usedKeys[$i] = $i;
-                return $i;
+        foreach ($this->getKeyChars() as $i) {
+            $literal = $i;
+            if (strpos($data, $literal) === false && !in_array($literal, $this->usedKeys)) {
+                $this->usedKeys[$literal] = $literal;
+                return $literal;
             }
         }
 
         $i = 0;
         $literal = '_' .$i . '_';
-        while (strstr($data, $literal) || in_array($literal, $this->usedKeys)) {
+        while (strpos($data, $literal) !== false || in_array($literal, $this->usedKeys)) {
             $literal = '_' . $i . '_';
             $i++;
         }
@@ -138,5 +140,40 @@ class Compressor
     private function freeKey(string $key)
     {
         unset($this->usedKeys[$key]);
+    }
+
+    private function getKeyChars()
+    {
+        return array_merge(range('a', 'z'), range('A', 'Z'), [
+            '#',
+            ']',
+            '[',
+            '{',
+            '}',
+            '@',
+            '~',
+            '#',
+            '/',
+            '\\',
+            ';',
+            ':',
+            '>',
+            '<',
+            '!',
+            '""',
+            '£',
+            '$',
+            '%',
+            '^',
+            '*',
+            '(',
+            ')',
+            '`',
+            '¬',
+            '|',
+            '.',
+            ',',
+            ',',
+        ]);
     }
 }
