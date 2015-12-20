@@ -14,7 +14,8 @@ class CompressorTest extends \PHPUnit_Framework_TestCase
 
         $compressor = new Compressor();
 
-        $compressedFile = tempnam(sys_get_temp_dir(), 'squeeze-test');
+        $compressedFile = tempnam(sys_get_temp_dir(), 'squeeze-test-' . date('His') . '-compressed');
+        $decompressedFile = tempnam(sys_get_temp_dir(), 'squeeze-test-' . date('His') . '-decompressed');
 
         $this->output('Compressing ' . $rawFile);
         $compressed = $compressor->compress($raw, (new Progress())->listen(function ($percentage) {
@@ -33,9 +34,11 @@ class CompressorTest extends \PHPUnit_Framework_TestCase
 
         $this->assertLessThan(filesize($rawFile), filesize($compressedFile));
 
-        $this->output('Compression ration ' . filesize($compressedFile) . '/' . filesize($rawFile) . ' = ' . round(filesize($compressedFile) / filesize($rawFile), 5) . '%');
+        $this->output('Compression ration ' . filesize($compressedFile) . '/' . filesize($rawFile) . ' = ' . round(filesize($compressedFile) / filesize($rawFile), 5) * 100 . '%');
         $this->output('Decompressing');
-        $this->assertEquals($raw, $compressor->decompress($compressed));
+        $decompressed = $compressor->decompress($compressed);
+        file_put_contents($decompressedFile, $decompressed);
+        $this->assertEquals($raw, $decompressed);
     }
 
     private function output(string $message)

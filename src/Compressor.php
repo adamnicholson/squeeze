@@ -10,55 +10,72 @@ class Compressor
     {
         $progress = $progress ?: new Progress();
 
-        $replacements = [];
+        $words = array_unique(preg_split('/[\s,\.]+/', $data));
+        $replacements = $this->replacePhrases($data, $words, $progress, 0);
 
-        preg_match_all('/\s([a-zA-Z0-0]+)\s/', $data, $matches);
-
-        $words = array_unique($matches[1]);
-
-        $i = 0;
-        foreach ($words as $word) {
-            $i++;
-            $progress->notify($i / count($words));
-
-            $key = $this->findKey($data);
-
-            if (strlen($word) <= strlen($key)) {
-                // Do not bother if the key is as big as the word
-                $this->freeKey($key);
-                continue;
-            }
-
-            $usages = substr_count($data, $word);
-
-            $usedSpace =  $usages * strlen($word);
-            $willUse = $usages * strlen($key) + strlen($key) + strlen($word) + 1;
-            if ($willUse >= $usedSpace) {
-                // Do not bother if the extra meta data means its overall larger with replacement
-                $this->freeKey($key);
-                continue;
-            }
-
-            $replacements[$word] = $key;
-        }
+        $data = str_replace(array_keys($replacements), $replacements, $data);
 
         //@ todo Not sure why it fails if we don't have a final random replace on the end
         $replacements[")(*&"] = $this->findKey($data);
-
-        $data = str_replace(array_keys($replacements), $replacements, $data);
 
         $meta = http_build_query($replacements);
 
         return $meta . PHP_EOL . $data;
     }
 
+    private function replacePhrases($data, $phrases, Progress $progress, float $progressModifier)
+    {
+        $replacements = [];
+
+        $i = 0;
+        foreach ($phrases as $phrase) {
+            $i++;
+            $progress->notify(($i / count($phrases)) + $progressModifier);
+
+            if (!$phrase) {
+                continue;
+            }
+
+            if (!strstr($data, $phrase)) {
+                // This phrase isn't even in the data. Skip it
+                continue;
+            }
+
+            $key = $this->findKey($data);
+
+            if (strlen($phrase) <= strlen($key)) {
+                // Do not bother if the key is as big as the word
+                $this->freeKey($key);
+                continue;
+            }
+
+            $usages = substr_count($data, $phrase);
+
+            $usedSpace =  $usages * strlen($phrase);
+            $willUse = $usages * strlen($key) + strlen($key) + strlen($phrase) + 1;
+            if ($willUse >= $usedSpace) {
+                // Do not bother if the extra meta data means its overall larger with replacement
+                $this->freeKey($key);
+                continue;
+            }
+
+            $replacements[$phrase] = $key;
+        }
+
+        return $replacements;
+    }
+
     public function decompress(string $compressed): string
     {
         preg_match('/^.+\n/', $compressed, $meta);
 
-        parse_str($meta[0], $replacements);
+        $replacements = [];
+        foreach (explode('&', $meta[0]) as $chunk) {
+            $param = explode('=', $chunk);
+            $replacements[urldecode($param[0])] = urldecode($param[1]);
+        }
 
-        $body = preg_replace('/^.+\n/', '', $compressed);
+        $body = preg_replace('/^.*\n/', '', $compressed);
 
         $body = str_replace(array_values($replacements), array_keys($replacements), $body);
 
