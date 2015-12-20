@@ -15,10 +15,7 @@ class Compressor
 
         $data = str_replace(array_keys($replacements), $replacements, $data);
 
-        //@ todo Not sure why it fails if we don't have a final random replace on the end
-        $replacements[")(*&"] = $this->findKey($data);
-
-        $meta = http_build_query($replacements);
+        $meta = http_build_query($replacements) . '&';
 
         return $meta . PHP_EOL . $data;
     }
@@ -72,6 +69,9 @@ class Compressor
         $replacements = [];
         foreach (explode('&', $meta[0]) as $chunk) {
             $param = explode('=', $chunk);
+            if (count($param) !== 2) {
+                continue;
+            }
             $replacements[urldecode($param[0])] = urldecode($param[1]);
         }
 
