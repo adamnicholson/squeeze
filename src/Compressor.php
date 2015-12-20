@@ -18,6 +18,11 @@ class Compressor
         $progress = $progress ?: new Progress();
 
         $words = array_unique(preg_split('/[\s,\.]+/', $data));
+
+        usort($words, function ($a, $b) {
+            return strlen($a) < strlen($b);
+        });
+
         $replacements = $this->replacePhrases($data, $words, $progress, 0);
 
         $data = str_replace(array_keys($replacements), $replacements, $data);
@@ -124,7 +129,7 @@ class Compressor
 
     /**
      * Release a key so it can be used again.
-     * 
+     *
      * @param string $key
      */
     private function freeKey(string $key)
