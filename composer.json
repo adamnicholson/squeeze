@@ -1,0 +1,17 @@
+{
+    "name": "adamnicholson/squeeze",
+    "authors": [
+        {
+            "name": "Adam Nicholson",
+            "email": "adamnicholson10@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Adamnicholson\\Squeeze\\": ["src/", "tests/"]
+        }
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^5.1"
+    }
+}
