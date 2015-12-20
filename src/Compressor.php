@@ -6,15 +6,21 @@ class Compressor
 {
     private $usedKeys = [];
 
-    public function compress(string $data): string
+    public function compress(string $data, Progress $progress = null): string
     {
+        $progress = $progress ?: new Progress();
+
         $replacements = [];
 
         preg_match_all('/\s([a-zA-Z0-0]+)\s/', $data, $matches);
 
         $words = array_unique($matches[1]);
 
+        $i = 0;
         foreach ($words as $word) {
+            $i++;
+            $progress->notify($i / count($words));
+
             $key = $this->findKey($data);
 
             if (strlen($word) <= strlen($key)) {
