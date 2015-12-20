@@ -19,10 +19,6 @@ class Compressor
 
         $words = array_unique(preg_split('/[\s,\.]+/', $data));
 
-        usort($words, function ($a, $b) {
-            return strlen($a) < strlen($b);
-        });
-
         $replacements = $this->replacePhrases($data, $words, $progress, 0);
 
         $data = str_replace(array_keys($replacements), $replacements, $data);
@@ -60,16 +56,23 @@ class Compressor
 
     private function replacePhrases($data, $phrases, Progress $progress, float $progressModifier)
     {
+        $phrases = array_filter($phrases, function ($value) {
+            return !empty($value);
+        });
+
+        usort($phrases, function ($a, $b) use ($data) {
+            $aUses = substr_count($data, $a) * strlen($a);
+            $bUses = substr_count($data, $b) * strlen($b);
+
+            return $bUses <=> $aUses;
+        });
+
         $replacements = [];
 
         $i = 0;
         foreach ($phrases as $phrase) {
             $i++;
             $progress->notify(($i / count($phrases)) + $progressModifier);
-
-            if (!$phrase) {
-                continue;
-            }
 
             if (!strstr($data, $phrase)) {
                 // This phrase isn't even in the data. Skip it
