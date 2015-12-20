@@ -17,6 +17,8 @@ class CompressorTest extends \PHPUnit_Framework_TestCase
 
         $this->assertLessThan(filesize($rawFile), filesize($compressedFile));
 
-        $this->assertEquals($raw, $compressor->decompresse($compressed));
+        echo PHP_EOL . filesize($compressedFile) . '/' . filesize($rawFile) . ' = ' . round(filesize($compressedFile) / filesize($rawFile), 5) . '%' . PHP_EOL;
+
+        $this->assertEquals($raw, $compressor->decompress($compressed));
     }
 }
