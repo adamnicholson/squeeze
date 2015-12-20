@@ -6,6 +6,13 @@ class Compressor
 {
     private $usedKeys = [];
 
+    /**
+     * Compress some data.
+     *
+     * @param string $data
+     * @param Progress|null $progress
+     * @return string
+     */
     public function compress(string $data, Progress $progress = null): string
     {
         $progress = $progress ?: new Progress();
@@ -18,6 +25,32 @@ class Compressor
         $meta = http_build_query($replacements) . '&';
 
         return $meta . PHP_EOL . $data;
+    }
+
+    /**
+     * Decompress some data.
+     *
+     * @param string $compressed
+     * @return string
+     */
+    public function decompress(string $compressed): string
+    {
+        preg_match('/^.+\n/', $compressed, $meta);
+
+        $replacements = [];
+        foreach (explode('&', $meta[0]) as $chunk) {
+            $param = explode('=', $chunk);
+            if (count($param) !== 2) {
+                continue;
+            }
+            $replacements[urldecode($param[0])] = urldecode($param[1]);
+        }
+
+        $body = preg_replace('/^.*\n/', '', $compressed);
+
+        $body = str_replace(array_values($replacements), array_keys($replacements), $body);
+
+        return $body;
     }
 
     private function replacePhrases($data, $phrases, Progress $progress, float $progressModifier)
@@ -62,26 +95,12 @@ class Compressor
         return $replacements;
     }
 
-    public function decompress(string $compressed): string
-    {
-        preg_match('/^.+\n/', $compressed, $meta);
-
-        $replacements = [];
-        foreach (explode('&', $meta[0]) as $chunk) {
-            $param = explode('=', $chunk);
-            if (count($param) !== 2) {
-                continue;
-            }
-            $replacements[urldecode($param[0])] = urldecode($param[1]);
-        }
-
-        $body = preg_replace('/^.*\n/', '', $compressed);
-
-        $body = str_replace(array_values($replacements), array_keys($replacements), $body);
-
-        return $body;
-    }
-
+    /**
+     * Find an unused key.
+     *
+     * @param string $data
+     * @return string
+     */
     private function findKey(string $data): string
     {
         foreach (array_merge(range('a', 'z'), range('A', 'Z')) as $i) {
@@ -103,6 +122,11 @@ class Compressor
         return $literal;
     }
 
+    /**
+     * Release a key so it can be used again.
+     * 
+     * @param string $key
+     */
     private function freeKey(string $key)
     {
         unset($this->usedKeys[$key]);
