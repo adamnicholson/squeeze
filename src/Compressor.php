@@ -67,7 +67,7 @@ class Compressor
 
     private function findKey(string $data): string
     {
-        foreach (range('a', 'z') as $i) {
+        foreach (array_merge(range('a', 'z'), range('A', 'Z')) as $i) {
             if (!strstr($data, $i) && !in_array($i, $this->usedKeys)) {
                 $this->usedKeys[$i] = $i;
                 return $i;
