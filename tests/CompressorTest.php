@@ -6,16 +6,17 @@ class CompressorTest extends \PHPUnit_Framework_TestCase
 {
     public function testCompress()
     {
-        $raw = file_get_contents(__DIR__ . '/raw.txt');
+        $rawFile = __DIR__ . '/raw.txt';
+        $raw = file_get_contents($rawFile);
 
         $compressor = new Compressor();
 
+        $compressedFile = tempnam(sys_get_temp_dir(), 'squeeze-test');
         $compressed = $compressor->compress($raw);
+        file_put_contents($compressedFile, $compressed);
 
-        $this->assertLessThan(strlen($raw), strlen($compressed));
+        $this->assertLessThan(filesize($rawFile), filesize($compressedFile));
 
-        $decompressed = $compressor->decompresse($compressed);
-
-        $this->assertEquals($raw, $decompressed);
+        $this->assertEquals($raw, $compressor->decompresse($compressed));
     }
 }
