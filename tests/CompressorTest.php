@@ -4,16 +4,19 @@ namespace Adamnicholson\Squeeze;
 
 class CompressorTest extends \PHPUnit_Framework_TestCase
 {
-    public function testCompress()
+    /**
+     * @param string $rawFile
+     * @dataProvider testFiles
+     */
+    public function testCompress(string $rawFile)
     {
-        $rawFile = __DIR__ . '/raw.txt';
         $raw = file_get_contents($rawFile);
 
         $compressor = new Compressor();
 
         $compressedFile = tempnam(sys_get_temp_dir(), 'squeeze-test');
 
-        $this->output('Compressing');
+        $this->output('Compressing ' . $rawFile);
         $compressed = $compressor->compress($raw, (new Progress())->listen(function ($percentage) {
             static $lastBand = 0;
 
@@ -38,5 +41,15 @@ class CompressorTest extends \PHPUnit_Framework_TestCase
     private function output(string $message)
     {
         fwrite(STDOUT, $message . PHP_EOL);
+    }
+
+    public function testFiles()
+    {
+        return [
+            [__DIR__ . '/raw.txt'],
+            [__DIR__ . '/raw2.txt'],
+            [__DIR__ . '/raw3.txt'],
+            [__DIR__ . '/raw4.txt'],
+        ];
     }
 }
